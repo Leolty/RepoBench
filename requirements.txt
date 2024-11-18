@@ -2,7 +2,6 @@ openai
 transformers
 torch
 fuzzywuzzy
-difflib
 tqdm
 fire
 codebleu
