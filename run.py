@@ -140,11 +140,12 @@ def main(
     top_p: float = 0.95,
     max_new_tokens: int = 128, # max number of tokens to generate 
     batch_size: int = 1,
-    res_dir: str = "./results"
+    res_dir: str = "./results",
+    device: str = "cuda",
     ):
     
     # Load the dataset
-    dataset = load_dataset(dataset_name, ignore_verifications=True)
+    dataset = load_dataset(dataset_name)
     
     # Filter the dataset by date range
     dataset = filter_dataset_by_date_range(dataset, start_date, end_date)
@@ -157,7 +158,7 @@ def main(
     tokenizer.padding_side = "left"
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True).cuda()
+    model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True).to(device)
     model.generation_config.pad_token_id = tokenizer.pad_token_id
     
     # Create the save directory
@@ -169,7 +170,7 @@ def main(
             batch_data = [data[j] for j in range(i, min(i + batch_size, len(data)))]
             batch_prompts = [construct_prompt(d, tokenizer=tokenizer, max_token_nums=max_token_nums, language=language) for d in batch_data]
             
-            batch_inputs = tokenizer(batch_prompts, return_tensors="pt", padding=True).to("cuda")
+            batch_inputs = tokenizer(batch_prompts, return_tensors="pt", padding=True).to(device)
             batch_outputs = model.generate(**batch_inputs, max_new_tokens=max_new_tokens, temperature=temperature, top_p=top_p, do_sample=True)
             
             for j, outputs in enumerate(batch_outputs):
